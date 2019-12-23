@@ -49,6 +49,7 @@ static LPVOID* addr_player_1;
 static uint8_t* addr_player_1_spell;
 static LPVOID* addr_player_2;
 static uint8_t* addr_player_2_spell;
+static int* money;
 
 // writing to memory
 static DWORD procID;
@@ -74,11 +75,11 @@ static D3DPRESENT_PARAMETERS g_d3dpp = {};
 
 void ResetDevice()
 {
-  
+
   ImGui_ImplDX9_InvalidateDeviceObjects();
   g_pd3dDevice->Reset(&g_d3dpp);
   ImGui_ImplDX9_CreateDeviceObjects();
-  
+
 }
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -217,13 +218,13 @@ LRESULT CALLBACK hWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
       }
   }
   return CallWindowProc(oWndProc, hWnd, msg, wParam, lParam);
-  
+
 }
 
 HHOOK hMouseHook;
 LRESULT CALLBACK mouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-  
+
   ImGuiIO& io = ImGui::GetIO();
 
   switch(wParam)
@@ -237,7 +238,7 @@ LRESULT CALLBACK mouseProc(int nCode, WPARAM wParam, LPARAM lParam)
   }
 
   return CallNextHookEx(hMouseHook, nCode, wParam, lParam);
-  
+
 }
 HHOOK MouseHook;
 
@@ -248,13 +249,71 @@ static bool freeze_spells_prev = freeze_spells;
 static uint8_t orig_code_addr_spell_change[] = {0x88, 0x87, 0xC4, 0x12, 0x00, 0x00};
 static int player = 1;
 
+
 static bool print_debug_info = true;
 static bool init_players = false;
 
 D3DDEVICE_CREATION_PARAMETERS deviceParams;
-// Declare the detour function
+
+static void HelpMarker(const char* desc)
+{
+
+  ImGui::TextDisabled("(?)");
+  if (ImGui::IsItemHovered())
+  {
+    ImGui::BeginTooltip();
+    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+    ImGui::TextUnformatted(desc);
+    ImGui::PopTextWrapPos();
+    ImGui::EndTooltip();
+  }
+
+}
+
 long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
 {
+
+  if(!init_addresses)
+  {
+    init_addresses = true;
+
+    // position console window for debugging
+    HWND consoleWindow = GetConsoleWindow();
+    SetWindowPos(consoleWindow, 0, 2000, 500, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);	
+
+    ZeroMemory(&g_d3dpp, sizeof(g_d3dpp));
+    g_d3dpp.Windowed = TRUE;
+    g_d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    g_d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
+    g_d3dpp.EnableAutoDepthStencil = TRUE;
+    g_d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+    g_d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
+
+
+    addr = (LPVOID*) ( ((unsigned long)base) + 0x1fc08);
+    jmp_addr = (LPVOID*) ( ((unsigned long)addr) + 0x6  );
+    addr_spell_change = (LPVOID*) (((unsigned long)base)+0xE493B);
+    addr_player_1 = (LPVOID*) (((unsigned long)base)+0xB71DA0);
+    addr_player_1_spell = (uint8_t*)(((unsigned long)*addr_player_1)+0x12c4);
+    addr_player_2 = (LPVOID*) (((unsigned long)base)+0xB71DA4);
+    addr_player_2_spell = (uint8_t*)(((unsigned long)*addr_player_1)+0x12c4);
+
+    money = (int*) (*((LPVOID*)(((unsigned long)base)+0xB7181C)));
+
+    int offset = abs((int)addr-(int)&my_jump)-5;
+
+    jmp_code[4] = (offset >> 24) & 0xFF;
+    jmp_code[3] = (offset >> 16) & 0xFF;
+    jmp_code[2] = (offset >> 8) & 0xFF;
+    jmp_code[1] = offset & 0xFF;
+
+
+    memcpy(org_code, addr, sizeof(org_code));
+
+    for(uint8_t val: org_code)
+      printf("%02X ",val);
+    std::cout << std::endl;
+  }
 
   if (!init_imgui)
   {
@@ -316,6 +375,18 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
       ImGui::Text("Current Spell: %d", *addr_player_1_spell);
     else
       ImGui::Text("Current Spell: %d", *addr_player_2_spell);
+
+    // money
+    if(money)
+    {
+      ImGui::InputInt("Money", money);
+      ImGui::SameLine(); HelpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n");
+    }
+    else
+    {
+      money = (int*) (*((LPVOID*)(((unsigned long)base)+0xB7181C)));
+      ImGui::Text("Money: ???");
+    }
 
     ImGui::End();
 
@@ -403,49 +474,6 @@ int main()
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID)
 {
-
-  if(!init_addresses)
-  {
-
-    init_addresses = true;
-
-    // position console window for debugging
-    HWND consoleWindow = GetConsoleWindow();
-    SetWindowPos(consoleWindow, 0, 2000, 500, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);	
-
-    ZeroMemory(&g_d3dpp, sizeof(g_d3dpp));
-    g_d3dpp.Windowed = TRUE;
-    g_d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    g_d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
-    g_d3dpp.EnableAutoDepthStencil = TRUE;
-    g_d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
-    g_d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
-
-
-    addr = (LPVOID*) ( ((unsigned long)base) + 0x1fc08);
-    jmp_addr = (LPVOID*) ( ((unsigned long)addr) + 0x6  );
-    addr_spell_change = (LPVOID*) (((unsigned long)base)+0xE493B);
-    addr_player_1 = (LPVOID*) (((unsigned long)base)+0xB71DA0);
-    addr_player_1_spell = (uint8_t*)(((unsigned long)*addr_player_1)+0x12c4);
-    addr_player_2 = (LPVOID*) (((unsigned long)base)+0xB71DA4);
-    addr_player_2_spell = (uint8_t*)(((unsigned long)*addr_player_1)+0x12c4);
-
-
-    int offset = abs((int)addr-(int)&my_jump)-5;
-
-    jmp_code[4] = (offset >> 24) & 0xFF;
-    jmp_code[3] = (offset >> 16) & 0xFF;
-    jmp_code[2] = (offset >> 8) & 0xFF;
-    jmp_code[1] = offset & 0xFF;
-
-
-    memcpy(org_code, addr, sizeof(org_code));
-
-    for(uint8_t val: org_code)
-      printf("%02X ",val);
-    std::cout << std::endl;
-
-  }
 
   DisableThreadLibraryCalls(hInstance);
 
