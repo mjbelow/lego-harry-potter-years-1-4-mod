@@ -2,8 +2,10 @@
 .model flat, c
 
 extrn jmp_addr:DWORD
-extrn ret_speed:DWORD
 extrn speed:DWORD
+extrn ret_speed:DWORD
+extrn jump:DWORD
+extrn ret_jump:DWORD
 
 .code
 
@@ -17,5 +19,11 @@ speed_hack proc export
   fstp  dword ptr [esp + 74h]
   jmp   dword ptr [ret_speed]
 speed_hack endp
+
+jump_hack proc export
+  fld   dword ptr [jump]
+  and   ebx, 101h
+  jmp   dword ptr [ret_jump]
+jump_hack endp
 
 end

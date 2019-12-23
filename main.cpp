@@ -18,10 +18,13 @@
 extern "C" LPVOID* jmp_addr = (LPVOID*)0;
 extern "C" float speed = 5;
 extern "C" LPVOID* ret_speed = (LPVOID*)0;
+extern "C" float jump = 1.9;
+extern "C" LPVOID* ret_jump = (LPVOID*)0;
 
 // assembly file functions
 extern "C" void my_jump();
 extern "C" void speed_hack();
+extern "C" void jump_hack();
 
 // hook definitions
 typedef long(__stdcall* EndScene)(LPDIRECT3DDEVICE9);
@@ -54,6 +57,7 @@ static LPVOID* addr_player_2;
 static uint8_t* addr_player_2_spell;
 static int* money;
 static LPVOID* addr_speed;
+static LPVOID* addr_jump;
 
 // writing to memory
 static DWORD procID;
@@ -65,6 +69,8 @@ static std::uint8_t jmp_code[6] = {0xE9,0x00,0x00,0x00,0x00,0x00};
 static std::uint8_t org_code[6];
 static std::uint8_t jmp_speed[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_speed[5];
+static std::uint8_t jmp_jump[5] = {0xE9,0x00,0x00,0x00,0x00};
+static std::uint8_t org_jump[5];
 
 // initializing
 static bool init_handle = false;
@@ -258,6 +264,9 @@ static int player = 1;
 static bool speed_hack_set = false;
 static bool speed_hack_set_prev = speed_hack_set;
 
+static bool jump_hack_set = false;
+static bool jump_hack_set_prev = jump_hack_set;
+
 static bool print_debug_info = true;
 static bool init_players = false;
 
@@ -322,7 +331,19 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_speed[3] = (offset >> 16) & 0xFF;
     jmp_speed[4] = (offset >> 24) & 0xFF;
     
+    // jump hack
+    addr_jump = (LPVOID*) (((unsigned long)base) + 0x41CD10);
+    ret_jump = (LPVOID*) (((unsigned long)addr_jump) + 0x9);
+    memcpy(org_jump, addr_jump, 5);
 
+    offset = abs((int)&jump_hack - (int)addr_jump) - 5;
+    
+    jmp_jump[1] = offset & 0xFF;
+    jmp_jump[2] = (offset >> 8) & 0xFF;
+    jmp_jump[3] = (offset >> 16) & 0xFF;
+    jmp_jump[4] = (offset >> 24) & 0xFF;
+    
+    
     offset = abs((int)addr-(int)&my_jump)-5;
 
     jmp_code[4] = (offset >> 24) & 0xFF;
@@ -413,7 +434,11 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
 
     // speed hack
     ImGui::Checkbox("Speed Hack", &speed_hack_set);
-    ImGui::InputFloat("Speed", &speed, 0.01f, 1.0f, "%.3f");
+    ImGui::InputFloat("Speed", &speed, 0.1f, 1.0f, "%.3f");
+    
+    // speed hack
+    ImGui::Checkbox("Jump Hack", &jump_hack_set);
+    ImGui::InputFloat("Jump", &jump, 0.1f, 1.0f, "%.3f");
     
 
     ImGui::End();
@@ -454,6 +479,15 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
       WriteProcessMemory(handle, addr_speed, &jmp_speed, 5, NULL);
     else
       WriteProcessMemory(handle, addr_speed, &org_speed, 5, NULL);
+  }
+
+  if(jump_hack_set != jump_hack_set_prev)
+  {
+    jump_hack_set_prev = jump_hack_set;
+    if(jump_hack_set)
+      WriteProcessMemory(handle, addr_jump, &jmp_jump, 5, NULL);
+    else
+      WriteProcessMemory(handle, addr_jump, &org_jump, 5, NULL);
   }
 
   // set fillmode according to cheat menu radio button (POINT, WIREFRAME, SOLID)
