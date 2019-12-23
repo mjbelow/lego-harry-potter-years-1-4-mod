@@ -16,9 +16,12 @@
 
 // variables needed for assembly file
 extern "C" LPVOID* jmp_addr = (LPVOID*)0;
+extern "C" float speed = 5;
+extern "C" LPVOID* ret_speed = (LPVOID*)0;
 
 // assembly file functions
 extern "C" void my_jump();
+extern "C" void speed_hack();
 
 // hook definitions
 typedef long(__stdcall* EndScene)(LPDIRECT3DDEVICE9);
@@ -50,6 +53,7 @@ static uint8_t* addr_player_1_spell;
 static LPVOID* addr_player_2;
 static uint8_t* addr_player_2_spell;
 static int* money;
+static LPVOID* addr_speed;
 
 // writing to memory
 static DWORD procID;
@@ -59,6 +63,8 @@ static HANDLE handle;
 static std::uint8_t nop_code[] {0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90};
 static std::uint8_t jmp_code[6] = {0xE9,0x00,0x00,0x00,0x00,0x00};
 static std::uint8_t org_code[6];
+static std::uint8_t jmp_speed[5] = {0xE9,0x00,0x00,0x00,0x00};
+static std::uint8_t org_speed[5];
 
 // initializing
 static bool init_handle = false;
@@ -249,6 +255,8 @@ static bool freeze_spells_prev = freeze_spells;
 static uint8_t orig_code_addr_spell_change[] = {0x88, 0x87, 0xC4, 0x12, 0x00, 0x00};
 static int player = 1;
 
+static bool speed_hack_set = false;
+static bool speed_hack_set_prev = speed_hack_set;
 
 static bool print_debug_info = true;
 static bool init_players = false;
@@ -276,6 +284,8 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
   if(!init_addresses)
   {
     init_addresses = true;
+    
+    int offset;
 
     // position console window for debugging
     HWND consoleWindow = GetConsoleWindow();
@@ -300,7 +310,20 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
 
     money = (int*) (*((LPVOID*)(((unsigned long)base)+0xB7181C)));
 
-    int offset = abs((int)addr-(int)&my_jump)-5;
+    // speed hack
+    addr_speed = (LPVOID*) (((unsigned long)base) + 0x10C223);
+    ret_speed = (LPVOID*) (((unsigned long)addr_speed) + 0x7);
+    memcpy(org_speed, addr_speed, sizeof(org_speed));
+
+    offset = abs((int)&speed_hack - (int)addr_speed) - 5;
+    
+    jmp_speed[1] = offset & 0xFF;
+    jmp_speed[2] = (offset >> 8) & 0xFF;
+    jmp_speed[3] = (offset >> 16) & 0xFF;
+    jmp_speed[4] = (offset >> 24) & 0xFF;
+    
+
+    offset = abs((int)addr-(int)&my_jump)-5;
 
     jmp_code[4] = (offset >> 24) & 0xFF;
     jmp_code[3] = (offset >> 16) & 0xFF;
@@ -388,6 +411,11 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
       ImGui::Text("Money: ???");
     }
 
+    // speed hack
+    ImGui::Checkbox("Speed Hack", &speed_hack_set);
+    ImGui::InputFloat("Speed", &speed, 0.01f, 1.0f, "%.3f");
+    
+
     ImGui::End();
 
     // demo window to test imgui widgets
@@ -412,13 +440,20 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
 
   if(freeze_spells != freeze_spells_prev)
   {
-
     freeze_spells_prev = freeze_spells;
     if(freeze_spells)
       WriteProcessMemory(handle, addr_spell_change, &nop_code, 6, NULL);
     else
       WriteProcessMemory(handle, addr_spell_change, &orig_code_addr_spell_change, 6, NULL);
+  }
 
+  if(speed_hack_set != speed_hack_set_prev)
+  {
+    speed_hack_set_prev = speed_hack_set;
+    if(speed_hack_set)
+      WriteProcessMemory(handle, addr_speed, &jmp_speed, 5, NULL);
+    else
+      WriteProcessMemory(handle, addr_speed, &org_speed, 5, NULL);
   }
 
   // set fillmode according to cheat menu radio button (POINT, WIREFRAME, SOLID)
