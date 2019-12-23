@@ -20,11 +20,14 @@ extern "C" float speed = 5;
 extern "C" LPVOID* ret_speed = (LPVOID*)0;
 extern "C" float jump = 1.9;
 extern "C" LPVOID* ret_jump = (LPVOID*)0;
+extern "C" float gravity = .1;
+extern "C" LPVOID* ret_gravity = (LPVOID*)0;
 
 // assembly file functions
 extern "C" void my_jump();
 extern "C" void speed_hack();
 extern "C" void jump_hack();
+extern "C" void gravity_hack();
 
 // hook definitions
 typedef long(__stdcall* EndScene)(LPDIRECT3DDEVICE9);
@@ -58,6 +61,7 @@ static uint8_t* addr_player_2_spell;
 static int* money;
 static LPVOID* addr_speed;
 static LPVOID* addr_jump;
+static LPVOID* addr_gravity;
 
 // writing to memory
 static DWORD procID;
@@ -71,6 +75,8 @@ static std::uint8_t jmp_speed[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_speed[5];
 static std::uint8_t jmp_jump[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_jump[5];
+static std::uint8_t jmp_gravity[5] = {0xE9,0x00,0x00,0x00,0x00};
+static std::uint8_t org_gravity[5];
 
 // initializing
 static bool init_handle = false;
@@ -267,6 +273,9 @@ static bool speed_hack_set_prev = speed_hack_set;
 static bool jump_hack_set = false;
 static bool jump_hack_set_prev = jump_hack_set;
 
+static bool gravity_hack_set = false;
+static bool gravity_hack_set_prev = gravity_hack_set;
+
 static bool print_debug_info = true;
 static bool init_players = false;
 
@@ -342,6 +351,18 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_jump[2] = (offset >> 8) & 0xFF;
     jmp_jump[3] = (offset >> 16) & 0xFF;
     jmp_jump[4] = (offset >> 24) & 0xFF;
+    
+    // gravity hack
+    addr_gravity = (LPVOID*) (((unsigned long)base) + 0xFC017);
+    ret_gravity = (LPVOID*) (((unsigned long)addr_gravity) + 0x6);
+    memcpy(org_gravity, addr_gravity, 5);
+
+    offset = abs((int)&gravity_hack - (int)addr_gravity) - 5;
+    
+    jmp_gravity[1] = offset & 0xFF;
+    jmp_gravity[2] = (offset >> 8) & 0xFF;
+    jmp_gravity[3] = (offset >> 16) & 0xFF;
+    jmp_gravity[4] = (offset >> 24) & 0xFF;
     
     
     offset = abs((int)addr-(int)&my_jump)-5;
@@ -440,6 +461,10 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     ImGui::Checkbox("Jump Hack", &jump_hack_set);
     ImGui::InputFloat("Jump", &jump, 0.1f, 1.0f, "%.3f");
     
+    // gravity hack
+    ImGui::Checkbox("Gravity Hack", &gravity_hack_set);
+    ImGui::InputFloat("Gravity", &gravity, 0.1f, 1.0f, "%.3f");
+    
 
     ImGui::End();
 
@@ -488,6 +513,15 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
       WriteProcessMemory(handle, addr_jump, &jmp_jump, 5, NULL);
     else
       WriteProcessMemory(handle, addr_jump, &org_jump, 5, NULL);
+  }
+
+  if(gravity_hack_set != gravity_hack_set_prev)
+  {
+    gravity_hack_set_prev = gravity_hack_set;
+    if(gravity_hack_set)
+      WriteProcessMemory(handle, addr_gravity, &jmp_gravity, 5, NULL);
+    else
+      WriteProcessMemory(handle, addr_gravity, &org_gravity, 5, NULL);
   }
 
   // set fillmode according to cheat menu radio button (POINT, WIREFRAME, SOLID)

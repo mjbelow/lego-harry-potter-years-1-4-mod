@@ -6,6 +6,8 @@ extrn speed:DWORD
 extrn ret_speed:DWORD
 extrn jump:DWORD
 extrn ret_jump:DWORD
+extrn gravity:DWORD
+extrn ret_gravity:DWORD
 
 .code
 
@@ -25,5 +27,10 @@ jump_hack proc export
   and   ebx, 101h
   jmp   dword ptr [ret_jump]
 jump_hack endp
+
+gravity_hack proc export
+  fld   dword ptr [gravity]
+  jmp   dword ptr [ret_gravity]
+gravity_hack endp
 
 end
