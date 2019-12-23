@@ -15,7 +15,7 @@ if %errorlevel% neq 0 (
 )
 
 REM compile
-cl /c /I include main.cpp src\*.cpp /Foobjects/ /link /libpath:"lib" user32.lib d3d9.lib MinHook.x86.lib
+cl /c /I include main.cpp /Foobjects/
 
 if %errorlevel% neq 0 (
   pause
@@ -29,7 +29,7 @@ if not exist dll (
 cd dll
 
 REM link objects into a DLL, which needs to be injected
-link /DLL ../objects/*.obj /libpath:"../lib" MinHook.x86.lib /out:InjectedDll.dll
+link /DLL ../objects/*.obj "../lib/MinHook.x86.lib" /out:InjectedDll.dll
 
 if %errorlevel% neq 0 (
   pause
