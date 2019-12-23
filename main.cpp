@@ -22,12 +22,14 @@ extern "C" float jump = 1.9;
 extern "C" LPVOID* ret_jump = (LPVOID*)0;
 extern "C" float gravity = .1;
 extern "C" LPVOID* ret_gravity = (LPVOID*)0;
+extern "C" LPVOID* ret_tank_controls = (LPVOID*)0;
 
 // assembly file functions
 extern "C" void my_jump();
 extern "C" void speed_hack();
 extern "C" void jump_hack();
 extern "C" void gravity_hack();
+extern "C" void tank_controls();
 
 // hook definitions
 typedef long(__stdcall* EndScene)(LPDIRECT3DDEVICE9);
@@ -54,14 +56,15 @@ static bool change_update = false;
 static LPVOID* base = (LPVOID*)GetModuleHandle(NULL);
 static LPVOID* addr;
 static LPVOID* addr_spell_change;
-static LPVOID* addr_player_1;
+extern "C" LPVOID* addr_player_1 = (LPVOID*)0;
 static uint8_t* addr_player_1_spell;
-static LPVOID* addr_player_2;
+extern "C" LPVOID* addr_player_2 = (LPVOID*)0;
 static uint8_t* addr_player_2_spell;
 static int* money;
 static LPVOID* addr_speed;
 static LPVOID* addr_jump;
 static LPVOID* addr_gravity;
+static LPVOID* addr_tank_controls;
 
 // writing to memory
 static DWORD procID;
@@ -77,6 +80,8 @@ static std::uint8_t jmp_jump[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_jump[5];
 static std::uint8_t jmp_gravity[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_gravity[5];
+static std::uint8_t jmp_tank_controls[5] = {0xE9,0x00,0x00,0x00,0x00};
+static std::uint8_t org_tank_controls[5];
 
 // initializing
 static bool init_handle = false;
@@ -276,6 +281,9 @@ static bool jump_hack_set_prev = jump_hack_set;
 static bool gravity_hack_set = false;
 static bool gravity_hack_set_prev = gravity_hack_set;
 
+static bool tank_controls_set = false;
+static bool tank_controls_set_prev = tank_controls_set;
+
 static bool print_debug_info = true;
 static bool init_players = false;
 
@@ -363,6 +371,18 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_gravity[2] = (offset >> 8) & 0xFF;
     jmp_gravity[3] = (offset >> 16) & 0xFF;
     jmp_gravity[4] = (offset >> 24) & 0xFF;
+    
+    // tank controls (1st person camera)
+    addr_tank_controls = (LPVOID*) (((unsigned long)base) + 0x38A985);
+    ret_tank_controls = (LPVOID*) (((unsigned long)addr_tank_controls) + 0x6);
+    memcpy(org_tank_controls, addr_tank_controls, 5);
+
+    offset = abs((int)&tank_controls - (int)addr_tank_controls) - 5;
+    
+    jmp_tank_controls[1] = offset & 0xFF;
+    jmp_tank_controls[2] = (offset >> 8) & 0xFF;
+    jmp_tank_controls[3] = (offset >> 16) & 0xFF;
+    jmp_tank_controls[4] = (offset >> 24) & 0xFF;
     
     
     offset = abs((int)addr-(int)&my_jump)-5;
@@ -465,6 +485,9 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     ImGui::Checkbox("Gravity Hack", &gravity_hack_set);
     ImGui::InputFloat("Gravity", &gravity, 0.1f, 1.0f, "%.3f");
     
+    // gravity hack
+    ImGui::Checkbox("Tank Controls", &tank_controls_set);
+    
 
     ImGui::End();
 
@@ -522,6 +545,15 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
       WriteProcessMemory(handle, addr_gravity, &jmp_gravity, 5, NULL);
     else
       WriteProcessMemory(handle, addr_gravity, &org_gravity, 5, NULL);
+  }
+
+  if(tank_controls_set != tank_controls_set_prev)
+  {
+    tank_controls_set_prev = tank_controls_set;
+    if(tank_controls_set)
+      WriteProcessMemory(handle, addr_tank_controls, &jmp_tank_controls, 5, NULL);
+    else
+      WriteProcessMemory(handle, addr_tank_controls, &org_tank_controls, 5, NULL);
   }
 
   // set fillmode according to cheat menu radio button (POINT, WIREFRAME, SOLID)

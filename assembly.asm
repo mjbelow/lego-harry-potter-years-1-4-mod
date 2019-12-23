@@ -8,6 +8,10 @@ extrn jump:DWORD
 extrn ret_jump:DWORD
 extrn gravity:DWORD
 extrn ret_gravity:DWORD
+extrn ret_tank_controls:DWORD
+extrn addr_player_1:DWORD
+extrn addr_player_2:DWORD
+
 
 .code
 
@@ -32,5 +36,24 @@ gravity_hack proc export
   fld   dword ptr [gravity]
   jmp   dword ptr [ret_gravity]
 gravity_hack endp
+
+tank_controls proc export
+  add   eax, [ecx + 20Ch]
+  push  eax
+  mov   eax, addr_player_1
+  cmp   esi, [eax]
+  je    adj
+  mov   eax, addr_player_2
+  cmp   esi, [eax]
+  je    adj
+  pop   eax
+  jmp   ret_tank_controls
+tank_controls endp
+
+adj proc
+  pop   eax
+  add   eax, 8000
+  jmp   ret_tank_controls
+adj endp
 
 end
