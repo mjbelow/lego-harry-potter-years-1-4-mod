@@ -35,6 +35,7 @@ extern "C" LPVOID* ret_camera_pitch = (LPVOID*)0;
 extern "C" int yaw = 0;
 extern "C" LPVOID* ret_camera_yaw = (LPVOID*)0;
 extern "C" float adjust_position = 1.0;
+extern "C" float adjust_height = 0;
 extern "C" LPVOID* ret_camera_position_x = (LPVOID*)0;
 extern "C" LPVOID* ret_camera_position_y = (LPVOID*)0;
 extern "C" LPVOID* ret_camera_position_z = (LPVOID*)0;
@@ -643,7 +644,8 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     
     // camera position
     ImGui::Checkbox("Camera Position", &camera_position_set);
-    ImGui::SliderFloat("Position", &adjust_position, -8.0, 8.0);
+    ImGui::SliderFloat("Position", &adjust_position, -32.0, 32.0);
+    ImGui::SliderFloat("Height", &adjust_height, -32.0, 32.0);
     ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
 
     ImGui::End();

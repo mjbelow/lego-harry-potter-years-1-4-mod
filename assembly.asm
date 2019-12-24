@@ -22,6 +22,7 @@ extrn pitch:DWORD
 extrn ret_camera_pitch:DWORD
 extrn yaw:DWORD
 extrn ret_camera_yaw:DWORD
+extrn adjust_height:DWORD
 extrn ret_camera_position_x:DWORD
 extrn ret_camera_position_y:DWORD
 extrn ret_camera_position_z:DWORD
@@ -215,6 +216,37 @@ camera_position_y proc export
 camera_position_y endp
 
 camera_position_z proc export
+  fstp  st(0)
+  push  eax
+  
+  push  eax
+  mov   eax, base
+  add   eax, 0B71F80h
+  mov   eax, [eax]
+  add   eax, 26Ch
+  cmp   ecx, eax
+  pop   eax
+  ; je    p2_z
+  
+  p1_z:
+  mov   eax, addr_player_1
+  mov   eax, [eax]
+  jmp   z_end
+  
+  p2_z:
+  mov   eax, addr_player_2
+  mov   eax, [eax]
+  
+  z_end:
+  mov   eax, [eax + 1604h]
+  mov   eax, [eax + 74h]
+  
+  push  eax
+  fld   dword ptr [esp]
+  pop   eax
+  pop   eax
+  fadd  adjust_height
+  
   fstp  dword ptr [ecx + 120h]
   jmp   ret_camera_position_z
 camera_position_z endp
