@@ -1,6 +1,7 @@
 .386
 .model flat, c
 
+extrn base:DWORD
 extrn jmp_addr:DWORD
 extrn speed:DWORD
 extrn ret_speed:DWORD
@@ -11,7 +12,8 @@ extrn ret_gravity:DWORD
 extrn ret_tank_controls:DWORD
 extrn addr_player_1:DWORD
 extrn addr_player_2:DWORD
-
+extrn pitch:DWORD
+extrn ret_camera_pitch:DWORD
 
 .code
 
@@ -46,14 +48,30 @@ tank_controls proc export
   mov   eax, addr_player_2
   cmp   esi, [eax]
   je    adj
+  
   pop   eax
   jmp   ret_tank_controls
-tank_controls endp
-
-adj proc
+  
+  adj:
   pop   eax
   add   eax, 8000
   jmp   ret_tank_controls
-adj endp
+tank_controls endp
+
+camera_pitch proc export
+  push  eax
+  mov   eax, 400000h + 0B71F84h
+  cmp   ebp, [eax]
+  je    pitch_orig
+  
+  pop   eax
+  mov   ebx, pitch
+  jmp   ret_camera_pitch
+  
+  pitch_orig:
+  pop   eax
+  mov   ebx, [ebp + 208h]
+  jmp   ret_camera_pitch
+camera_pitch endp
 
 end

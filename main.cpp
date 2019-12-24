@@ -23,6 +23,8 @@ extern "C" LPVOID* ret_jump = (LPVOID*)0;
 extern "C" float gravity = .1;
 extern "C" LPVOID* ret_gravity = (LPVOID*)0;
 extern "C" LPVOID* ret_tank_controls = (LPVOID*)0;
+extern "C" int pitch = 0;
+extern "C" LPVOID* ret_camera_pitch = (LPVOID*)0;
 
 // assembly file functions
 extern "C" void my_jump();
@@ -30,6 +32,7 @@ extern "C" void speed_hack();
 extern "C" void jump_hack();
 extern "C" void gravity_hack();
 extern "C" void tank_controls();
+extern "C" void camera_pitch();
 
 // hook definitions
 typedef long(__stdcall* EndScene)(LPDIRECT3DDEVICE9);
@@ -53,7 +56,7 @@ static bool t2_update = false;
 static bool change_update = false;
 
 // addresses (base, instructions, data)
-static LPVOID* base = (LPVOID*)GetModuleHandle(NULL);
+extern "C" LPVOID* base = (LPVOID*)GetModuleHandle(NULL);
 static LPVOID* addr;
 static LPVOID* addr_spell_change;
 extern "C" LPVOID* addr_player_1 = (LPVOID*)0;
@@ -65,6 +68,7 @@ static LPVOID* addr_speed;
 static LPVOID* addr_jump;
 static LPVOID* addr_gravity;
 static LPVOID* addr_tank_controls;
+static LPVOID* addr_camera_pitch;
 
 // writing to memory
 static DWORD procID;
@@ -82,6 +86,8 @@ static std::uint8_t jmp_gravity[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_gravity[5];
 static std::uint8_t jmp_tank_controls[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_tank_controls[5];
+static std::uint8_t jmp_camera_pitch[5] = {0xE9,0x00,0x00,0x00,0x00};
+static std::uint8_t org_camera_pitch[5];
 
 // initializing
 static bool init_handle = false;
@@ -284,6 +290,9 @@ static bool gravity_hack_set_prev = gravity_hack_set;
 static bool tank_controls_set = false;
 static bool tank_controls_set_prev = tank_controls_set;
 
+static bool camera_pitch_set = false;
+static bool camera_pitch_set_prev = camera_pitch_set;
+
 static bool print_debug_info = true;
 static bool init_players = false;
 
@@ -384,20 +393,34 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_tank_controls[3] = (offset >> 16) & 0xFF;
     jmp_tank_controls[4] = (offset >> 24) & 0xFF;
     
+    // camera pitch (1st person camera)
+    addr_camera_pitch = (LPVOID*) (((unsigned long)base) + 0xDA15);
+    ret_camera_pitch = (LPVOID*) (((unsigned long)addr_camera_pitch) + 0x6);
+    memcpy(org_camera_pitch, addr_camera_pitch, 5);
+
+    offset = abs((int)&camera_pitch - (int)addr_camera_pitch) - 5;
     
-    offset = abs((int)addr-(int)&my_jump)-5;
+    jmp_camera_pitch[1] = offset & 0xFF;
+    jmp_camera_pitch[2] = (offset >> 8) & 0xFF;
+    jmp_camera_pitch[3] = (offset >> 16) & 0xFF;
+    jmp_camera_pitch[4] = (offset >> 24) & 0xFF;
+    
+    
+    
+    
+    // offset = abs((int)addr-(int)&my_jump)-5;
 
-    jmp_code[4] = (offset >> 24) & 0xFF;
-    jmp_code[3] = (offset >> 16) & 0xFF;
-    jmp_code[2] = (offset >> 8) & 0xFF;
-    jmp_code[1] = offset & 0xFF;
+    // jmp_code[4] = (offset >> 24) & 0xFF;
+    // jmp_code[3] = (offset >> 16) & 0xFF;
+    // jmp_code[2] = (offset >> 8) & 0xFF;
+    // jmp_code[1] = offset & 0xFF;
 
 
-    memcpy(org_code, addr, sizeof(org_code));
+    // memcpy(org_code, addr, sizeof(org_code));
 
-    for(uint8_t val: org_code)
-      printf("%02X ",val);
-    std::cout << std::endl;
+    // for(uint8_t val: org_code)
+      // printf("%02X ",val);
+    // std::cout << std::endl;
   }
 
   if (!init_imgui)
@@ -485,9 +508,13 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     ImGui::Checkbox("Gravity Hack", &gravity_hack_set);
     ImGui::InputFloat("Gravity", &gravity, 0.1f, 1.0f, "%.3f");
     
-    // gravity hack
+    // tank controls
     ImGui::Checkbox("Tank Controls", &tank_controls_set);
     
+    // camera pitch
+    ImGui::Checkbox("Camera Pitch", &camera_pitch_set);
+    ImGui::SliderInt("Pitch", &pitch, -65536, 65536);
+    ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
 
     ImGui::End();
 
@@ -554,6 +581,15 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
       WriteProcessMemory(handle, addr_tank_controls, &jmp_tank_controls, 5, NULL);
     else
       WriteProcessMemory(handle, addr_tank_controls, &org_tank_controls, 5, NULL);
+  }
+
+  if(camera_pitch_set != camera_pitch_set_prev)
+  {
+    camera_pitch_set_prev = camera_pitch_set;
+    if(camera_pitch_set)
+      WriteProcessMemory(handle, addr_camera_pitch, &jmp_camera_pitch, 5, NULL);
+    else
+      WriteProcessMemory(handle, addr_camera_pitch, &org_camera_pitch, 5, NULL);
   }
 
   // set fillmode according to cheat menu radio button (POINT, WIREFRAME, SOLID)
