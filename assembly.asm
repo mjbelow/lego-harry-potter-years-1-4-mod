@@ -117,8 +117,6 @@ camera_yaw proc export
 camera_yaw endp
 
 camera_position_x proc export
-  ; fstp  dword ptr [ecx + 124h]
-  ; jmp   ret_camera_position_x
   fstp  st(0)
   push  eax
   push  ebx
@@ -132,7 +130,7 @@ camera_position_x proc export
   add   eax, 26Ch
   cmp   ecx, eax
   pop   eax
-  je    p2_x
+  ; je    p2_x
   
   p1_x:
   push  ecx
@@ -147,6 +145,14 @@ camera_position_x proc export
   jmp   x_end
   
   p2_x:
+  push  ecx
+  mov   eax, addr_player_2
+  mov   eax, [eax + 1604h]
+  movss xmm0, dword ptr [eax + 78h]
+  movss dword ptr [esp], xmm0
+  mov   eax, addr_player_2
+  mov   eax, [eax]
+  push  [eax + 88h]
   
   x_end:
   call  x_cam
@@ -157,13 +163,55 @@ camera_position_x proc export
   pop   eax
   fstp  dword ptr [ecx + 124h]
   jmp   ret_camera_position_x
-  
 camera_position_x endp
 
 camera_position_y proc export
+  fstp  st(0)
+  push  eax
+  push  ebx
+  push  ecx
+  push  edx
+  
+  push  eax
+  mov   eax, base
+  add   eax, 0B71F80h
+  mov   eax, [eax]
+  add   eax, 26Ch
+  cmp   ecx, eax
+  pop   eax
+  ; je    p2_y
+  
+  p1_y:
+  push  ecx
+  mov   eax, addr_player_1
+  mov   eax, [eax]
+  mov   eax, [eax + 1604h]
+  movss xmm0, dword ptr [eax + 70h]
+  movss dword ptr [esp], xmm0
+  mov   eax, addr_player_1
+  mov   eax, [eax]
+  push  [eax + 88h]
+  jmp   y_end
+  
+  p2_y:
+  push  ecx
+  mov   eax, addr_player_2
+  mov   eax, [eax + 1604h]
+  movss xmm0, dword ptr [eax + 70h]
+  movss dword ptr [esp], xmm0
+  mov   eax, addr_player_2
+  mov   eax, [eax]
+  push  [eax + 88h]
+  
+  y_end:
+  call  y_cam
+  add   esp, 8
+  pop   edx
+  pop   ecx
+  pop   ebx
+  pop   eax
   fstp  dword ptr [ecx + 11Ch]
   jmp   ret_camera_position_y
-  call  y_cam
 camera_position_y endp
 
 camera_position_z proc export
