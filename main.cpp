@@ -14,6 +14,12 @@
 #include <dinput.h>
 #include <tchar.h>
 
+#include <math.h>
+
+const float pi = 3.14159265358979323846264;
+const float my_pi = 32768.0;
+int reverse = 1;
+
 // variables needed for assembly file
 extern "C" LPVOID* jmp_addr = (LPVOID*)0;
 extern "C" float speed = 5;
@@ -22,11 +28,48 @@ extern "C" float jump = 1.9;
 extern "C" LPVOID* ret_jump = (LPVOID*)0;
 extern "C" float gravity = .1;
 extern "C" LPVOID* ret_gravity = (LPVOID*)0;
+extern "C" int tank = 0;
 extern "C" LPVOID* ret_tank_controls = (LPVOID*)0;
 extern "C" int pitch = 0;
 extern "C" LPVOID* ret_camera_pitch = (LPVOID*)0;
 extern "C" int yaw = 0;
 extern "C" LPVOID* ret_camera_yaw = (LPVOID*)0;
+extern "C" float adjust_position = 1.0;
+extern "C" LPVOID* ret_camera_position_x = (LPVOID*)0;
+extern "C" LPVOID* ret_camera_position_y = (LPVOID*)0;
+extern "C" LPVOID* ret_camera_position_z = (LPVOID*)0;
+
+// functions need for assembly file
+extern "C" __declspec(dllexport) float x_cam(uint16_t rotate, float x)
+{
+  
+  return x+(cos(rotate/my_pi*pi)/adjust_position)*reverse;
+  
+}
+
+extern "C" __declspec(dllexport) float y_cam(uint16_t rotate, float y)
+{
+  
+  return y+(sin(rotate/my_pi*pi)/adjust_position)*reverse;
+  
+}
+
+extern "C" __declspec(dllexport) float test_x = 0;
+extern "C" __declspec(dllexport) float test_y = 0;
+
+extern "C" __declspec(dllexport) void f_x()
+{
+  
+	test_x = x_cam(16383, 4.0);
+  
+}
+
+extern "C" __declspec(dllexport) void f_y()
+{
+  
+	test_y = y_cam(16383, 4.0);
+  
+}
 
 // assembly file functions
 extern "C" void my_jump();
@@ -36,6 +79,9 @@ extern "C" void gravity_hack();
 extern "C" void tank_controls();
 extern "C" void camera_pitch();
 extern "C" void camera_yaw();
+extern "C" void camera_position_x();
+extern "C" void camera_position_y();
+extern "C" void camera_position_z();
 
 // hook definitions
 typedef long(__stdcall* EndScene)(LPDIRECT3DDEVICE9);
@@ -73,6 +119,9 @@ static LPVOID* addr_gravity;
 static LPVOID* addr_tank_controls;
 static LPVOID* addr_camera_pitch;
 static LPVOID* addr_camera_yaw;
+static LPVOID* addr_camera_position_x;
+static LPVOID* addr_camera_position_y;
+static LPVOID* addr_camera_position_z;
 
 // writing to memory
 static DWORD procID;
@@ -94,6 +143,12 @@ static std::uint8_t jmp_camera_pitch[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_camera_pitch[5];
 static std::uint8_t jmp_camera_yaw[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_camera_yaw[5];
+static std::uint8_t jmp_camera_position_x[5] = {0xE9,0x00,0x00,0x00,0x00};
+static std::uint8_t org_camera_position_x[5];
+static std::uint8_t jmp_camera_position_y[5] = {0xE9,0x00,0x00,0x00,0x00};
+static std::uint8_t org_camera_position_y[5];
+static std::uint8_t jmp_camera_position_z[5] = {0xE9,0x00,0x00,0x00,0x00};
+static std::uint8_t org_camera_position_z[5];
 
 // initializing
 static bool init_handle = false;
@@ -302,6 +357,9 @@ static bool camera_pitch_set_prev = camera_pitch_set;
 static bool camera_yaw_set = false;
 static bool camera_yaw_set_prev = camera_yaw_set;
 
+static bool camera_position_set = false;
+static bool camera_position_set_prev = camera_position_set;
+
 static bool print_debug_info = true;
 static bool init_players = false;
 
@@ -426,6 +484,42 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_camera_yaw[3] = (offset >> 16) & 0xFF;
     jmp_camera_yaw[4] = (offset >> 24) & 0xFF;
     
+    // camera position x (1st person camera)
+    addr_camera_position_x = (LPVOID*) (((unsigned long)base) + 0xBB25);
+    ret_camera_position_x = (LPVOID*) (((unsigned long)addr_camera_position_x) + 0x6);
+    memcpy(org_camera_position_x, addr_camera_position_x, 5);
+
+    offset = abs((int)&camera_position_x - (int)addr_camera_position_x) - 5;
+    
+    jmp_camera_position_x[1] = offset & 0xFF;
+    jmp_camera_position_x[2] = (offset >> 8) & 0xFF;
+    jmp_camera_position_x[3] = (offset >> 16) & 0xFF;
+    jmp_camera_position_x[4] = (offset >> 24) & 0xFF;
+    
+    // camera position y (1st person camera)
+    addr_camera_position_y = (LPVOID*) (((unsigned long)base) + 0xBAF7);
+    ret_camera_position_y = (LPVOID*) (((unsigned long)addr_camera_position_y) + 0x6);
+    memcpy(org_camera_position_y, addr_camera_position_y, 5);
+
+    offset = abs((int)&camera_position_y - (int)addr_camera_position_y) - 5;
+    
+    jmp_camera_position_y[1] = offset & 0xFF;
+    jmp_camera_position_y[2] = (offset >> 8) & 0xFF;
+    jmp_camera_position_y[3] = (offset >> 16) & 0xFF;
+    jmp_camera_position_y[4] = (offset >> 24) & 0xFF;
+    
+    // camera position z (1st person camera)
+    addr_camera_position_z = (LPVOID*) (((unsigned long)base) + 0xBB0E);
+    ret_camera_position_z = (LPVOID*) (((unsigned long)addr_camera_position_z) + 0x6);
+    memcpy(org_camera_position_z, addr_camera_position_z, 5);
+
+    offset = abs((int)&camera_position_z - (int)addr_camera_position_z) - 5;
+    
+    jmp_camera_position_z[1] = offset & 0xFF;
+    jmp_camera_position_z[2] = (offset >> 8) & 0xFF;
+    jmp_camera_position_z[3] = (offset >> 16) & 0xFF;
+    jmp_camera_position_z[4] = (offset >> 24) & 0xFF;
+    
     
     
     
@@ -531,15 +625,25 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     
     // tank controls
     ImGui::Checkbox("Tank Controls", &tank_controls_set);
+    ImGui::SliderInt("Tank", &tank, -65536, 65536);
+    tank %= 65536;
+    ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
     
     // camera pitch
     ImGui::Checkbox("Camera Pitch", &camera_pitch_set);
     ImGui::SliderInt("Pitch", &pitch, -65536, 65536);
+    pitch %= 65536;
     ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
     
     // camera yaw
     ImGui::Checkbox("Camera Yaw", &camera_yaw_set);
     ImGui::SliderInt("Yaw", &yaw, -65536, 65536);
+    yaw %= 65536;
+    ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
+    
+    // camera position
+    ImGui::Checkbox("Camera Position", &camera_position_set);
+    ImGui::SliderFloat("Position", &adjust_position, -8.0, 8.0);
     ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
 
     ImGui::End();
@@ -625,6 +729,23 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
       WriteProcessMemory(handle, addr_camera_yaw, &jmp_camera_yaw, 5, NULL);
     else
       WriteProcessMemory(handle, addr_camera_yaw, &org_camera_yaw, 5, NULL);
+  }
+
+  if(camera_position_set != camera_position_set_prev)
+  {
+    camera_position_set_prev = camera_position_set;
+    if(camera_position_set)
+    {
+      WriteProcessMemory(handle, addr_camera_position_x, &jmp_camera_position_x, 5, NULL);
+      WriteProcessMemory(handle, addr_camera_position_y, &jmp_camera_position_y, 5, NULL);
+      WriteProcessMemory(handle, addr_camera_position_z, &jmp_camera_position_z, 5, NULL);
+    }
+    else
+    {
+      WriteProcessMemory(handle, addr_camera_position_x, &org_camera_position_x, 5, NULL);
+      WriteProcessMemory(handle, addr_camera_position_y, &org_camera_position_y, 5, NULL);
+      WriteProcessMemory(handle, addr_camera_position_z, &org_camera_position_z, 5, NULL);
+    }
   }
 
   // set fillmode according to cheat menu radio button (POINT, WIREFRAME, SOLID)
