@@ -14,6 +14,8 @@ extrn addr_player_1:DWORD
 extrn addr_player_2:DWORD
 extrn pitch:DWORD
 extrn ret_camera_pitch:DWORD
+extrn yaw:DWORD
+extrn ret_camera_yaw:DWORD
 
 .code
 
@@ -60,7 +62,8 @@ tank_controls endp
 
 camera_pitch proc export
   push  eax
-  mov   eax, 400000h + 0B71F84h
+  mov   eax, base
+  add   eax, 0B71F84h
   cmp   ebp, [eax]
   je    pitch_orig
   
@@ -73,5 +76,35 @@ camera_pitch proc export
   mov   ebx, [ebp + 208h]
   jmp   ret_camera_pitch
 camera_pitch endp
+
+camera_yaw proc export
+  mov   eax, base
+  add   eax, 0B71F84h
+  mov   eax, [eax]
+  cmp   ebp, eax
+  je    yaw_orig
+  
+  add   eax, 26Ch
+  cmp   ebp, eax
+  je    yaw_orig
+  
+  p1_yaw:
+  mov   eax, addr_player_1
+  mov   eax, [eax]
+  mov   eax, [eax + 88h]
+  sub   eax, yaw
+  jmp   ret_camera_yaw
+
+  p2_yaw:
+  mov   eax, addr_player_2
+  mov   eax, [eax]
+  mov   eax, [eax + 88h]
+  sub   eax, yaw
+  jmp   ret_camera_yaw
+  
+  yaw_orig:
+  mov   eax, [ebp + 20Ch]
+  jmp   ret_camera_yaw
+camera_yaw endp
 
 end
