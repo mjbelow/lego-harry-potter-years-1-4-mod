@@ -36,6 +36,7 @@ extern "C" int yaw = 0;
 extern "C" LPVOID* ret_camera_yaw = (LPVOID*)0;
 extern "C" float adjust_position = 1.0;
 extern "C" float adjust_height = 0;
+extern "C" int adjust_rotate = 0;
 extern "C" LPVOID* ret_camera_position_x = (LPVOID*)0;
 extern "C" LPVOID* ret_camera_position_y = (LPVOID*)0;
 extern "C" LPVOID* ret_camera_position_z = (LPVOID*)0;
@@ -44,6 +45,7 @@ extern "C" LPVOID* ret_camera_position_z = (LPVOID*)0;
 extern "C" __declspec(dllexport) float x_cam(uint16_t rotate, float x)
 {
   
+  rotate += adjust_rotate;
   return x+(cos(rotate/my_pi*pi)/adjust_position)*reverse;
   
 }
@@ -51,6 +53,7 @@ extern "C" __declspec(dllexport) float x_cam(uint16_t rotate, float x)
 extern "C" __declspec(dllexport) float y_cam(uint16_t rotate, float y)
 {
   
+  rotate += adjust_rotate;
   return y+(sin(rotate/my_pi*pi)/adjust_position)*reverse;
   
 }
@@ -361,6 +364,9 @@ static bool camera_yaw_set_prev = camera_yaw_set;
 static bool camera_position_set = false;
 static bool camera_position_set_prev = camera_position_set;
 
+static bool reverse_set = false;
+static bool reverse_set_prev = reverse_set;
+
 static bool print_debug_info = true;
 static bool init_players = false;
 
@@ -644,8 +650,12 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     
     // camera position
     ImGui::Checkbox("Camera Position", &camera_position_set);
+    ImGui::SameLine(); ImGui::Checkbox("Reverse", &reverse_set);
     ImGui::SliderFloat("Position", &adjust_position, -32.0, 32.0);
+    ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
     ImGui::SliderFloat("Height", &adjust_height, -32.0, 32.0);
+    ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
+    ImGui::SliderInt("Rotate", &adjust_rotate, -65536, 65536);
     ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
 
     ImGui::End();
@@ -748,6 +758,15 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
       WriteProcessMemory(handle, addr_camera_position_y, &org_camera_position_y, 5, NULL);
       WriteProcessMemory(handle, addr_camera_position_z, &org_camera_position_z, 5, NULL);
     }
+  }
+
+  if(reverse_set != reverse_set_prev)
+  {
+    reverse_set_prev = reverse_set;
+    if(reverse_set)
+      reverse = -1;
+    else
+      reverse = 1;
   }
 
   // set fillmode according to cheat menu radio button (POINT, WIREFRAME, SOLID)
