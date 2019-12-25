@@ -3,8 +3,8 @@
 
 .model flat, c
 
-x_cam PROTO C rotate:WORD, x:DWORD
-y_cam PROTO C rotate:WORD, y:DWORD
+x_cam proto c
+y_cam proto c
 
 extrn base:DWORD
 extrn jmp_addr:DWORD
@@ -57,9 +57,9 @@ tank_controls proc export
   mov   eax, addr_player_1
   cmp   esi, [eax]
   je    adj
-  mov   eax, addr_player_2
-  cmp   esi, [eax]
-  je    adj
+  ; mov   eax, addr_player_2
+  ; cmp   esi, [eax]
+  ; je    adj
   
   pop   eax
   jmp   ret_tank_controls
