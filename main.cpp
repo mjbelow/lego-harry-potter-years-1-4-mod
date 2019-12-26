@@ -18,7 +18,7 @@
 
 const float pi = 3.14159265358979323846264;
 const float my_pi = 32768.0;
-int reverse = 1;
+int reverse = -1;
 
 // variables needed for assembly file
 extern "C" LPVOID* jmp_addr = (LPVOID*)0;
@@ -26,7 +26,7 @@ extern "C" float speed = 5;
 extern "C" LPVOID* ret_speed = (LPVOID*)0;
 extern "C" float jump = 1.9;
 extern "C" LPVOID* ret_jump = (LPVOID*)0;
-extern "C" float gravity = .1;
+extern "C" float gravity = .0001;
 extern "C" LPVOID* ret_gravity = (LPVOID*)0;
 extern "C" int tank = 0;
 extern "C" LPVOID* ret_tank_controls = (LPVOID*)0;
@@ -37,9 +37,12 @@ extern "C" LPVOID* ret_camera_yaw = (LPVOID*)0;
 extern "C" float adjust_position = 1.0;
 extern "C" float adjust_height = 0;
 extern "C" int adjust_rotate = 0;
+extern "C" int adjust_rotate_prev = adjust_rotate;
 extern "C" LPVOID* ret_camera_position_x = (LPVOID*)0;
 extern "C" LPVOID* ret_camera_position_y = (LPVOID*)0;
 extern "C" LPVOID* ret_camera_position_z = (LPVOID*)0;
+
+int sensitivity = 0;
 
 // functions need for assembly file
 extern "C" __declspec(dllexport) float x_cam(uint16_t rotate, float x)
@@ -628,7 +631,9 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     
     // gravity hack
     ImGui::Checkbox("Gravity Hack", &gravity_hack_set);
+    gravity *= 1000;
     ImGui::InputFloat("Gravity", &gravity, 0.1f, 1.0f, "%.6f");
+    gravity /= 1000;
     
     // tank controls
     ImGui::Checkbox("Tank Controls", &tank_controls_set);
@@ -651,12 +656,36 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     // camera position
     ImGui::Checkbox("Camera Position", &camera_position_set);
     ImGui::SameLine(); ImGui::Checkbox("Reverse", &reverse_set);
-    ImGui::SliderFloat("Position", &adjust_position, -32.0, 32.0);
+    ImGui::SliderInt("Sensitivity", &sensitivity, 0, 6);
+    ImGui::SliderFloat("Distance", &adjust_position, 0, (pow(2,sensitivity)));
     ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
-    ImGui::SliderFloat("Height", &adjust_height, -32.0, 32.0);
+    ImGui::SliderFloat("Height", &adjust_height, -(pow(2,sensitivity))/2, (pow(2,sensitivity))/2);
     ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
-    ImGui::SliderInt("Rotate", &adjust_rotate, -65536, 65536);
+    ImGui::SliderInt("Rotation", &adjust_rotate, -65536, 65536);
+    adjust_rotate %= 65536;
     ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
+
+    // automatically adjust tank controls based off of camera rotation
+    if(adjust_rotate != adjust_rotate_prev)
+    {
+      adjust_rotate_prev = adjust_rotate;
+      tank = adjust_rotate * -1;
+      
+      if(reverse_set)
+      {
+        if(adjust_rotate < 0)
+          yaw = -32768 - adjust_rotate;
+        else
+          yaw = 32768 - adjust_rotate;        
+      }
+      else
+      {
+        if(adjust_rotate < 0)
+          yaw = -65536 - adjust_rotate;
+        else
+          yaw = 65536 - adjust_rotate;
+      }
+    }
 
     ImGui::End();
 
@@ -764,9 +793,9 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
   {
     reverse_set_prev = reverse_set;
     if(reverse_set)
-      reverse = -1;
-    else
       reverse = 1;
+    else
+      reverse = -1;
   }
 
   // set fillmode according to cheat menu radio button (POINT, WIREFRAME, SOLID)
