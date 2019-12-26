@@ -345,6 +345,7 @@ static bool freeze_spells = false;
 static bool freeze_spells_prev = freeze_spells;
 static uint8_t orig_code_addr_spell_change[] = {0x88, 0x87, 0xC4, 0x12, 0x00, 0x00};
 static int player = 1;
+static int select_spell;
 
 static bool speed_hack_set = false;
 static bool speed_hack_set_prev = speed_hack_set;
@@ -562,7 +563,7 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    ImGui::StyleColorsDark();
+    // ImGui::StyleColorsDark();
     ImGui_ImplWin32_Init(deviceParams.hFocusWindow);
     ImGui_ImplDX9_Init(pDevice);
 
@@ -608,6 +609,21 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
       ImGui::Text("Current Spell: %d", *addr_player_1_spell);
     else
       ImGui::Text("Current Spell: %d", *addr_player_2_spell);
+
+    if(init_players)
+    {
+      if(player==1)
+        select_spell = (int)*addr_player_1_spell;
+      else
+        select_spell = (int)*addr_player_2_spell;
+        
+      ImGui::InputInt("Spell", &select_spell);
+      
+      if(player==1)
+        *addr_player_1_spell = (uint8_t)select_spell;
+      else
+        *addr_player_2_spell = (uint8_t)select_spell;
+    }
 
     // money
     if(money)
