@@ -119,7 +119,7 @@ extern "C" __declspec(dllexport) LPVOID* addr_player_1 = (LPVOID*)0;
 static uint8_t* addr_player_1_spell;
 extern "C" __declspec(dllexport) LPVOID* addr_player_2 = (LPVOID*)0;
 static uint8_t* addr_player_2_spell;
-static int* money;
+static unsigned long* money;
 static LPVOID* addr_speed;
 static LPVOID* addr_jump;
 static LPVOID* addr_gravity;
@@ -346,6 +346,10 @@ static bool freeze_spells_prev = freeze_spells;
 static uint8_t orig_code_addr_spell_change[] = {0x88, 0x87, 0xC4, 0x12, 0x00, 0x00};
 static int player = 1;
 static int select_spell;
+static int spell_placeholder = 0;
+
+static const ImU8 spell_step = 1;
+static const ImU64 money_step = 1000;
 
 static bool speed_hack_set = false;
 static bool speed_hack_set_prev = speed_hack_set;
@@ -421,7 +425,7 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     addr_player_2 = (LPVOID*) (((unsigned long)base)+0xB71DA4);
     addr_player_2_spell = (uint8_t*)(((unsigned long)*addr_player_1)+0x12c4);
 
-    money = (int*) (*((LPVOID*)(((unsigned long)base)+0xB7181C)));
+    money = (unsigned long*) (*((LPVOID*)(((unsigned long)base)+0xB7181C)));
 
     // speed hack
     addr_speed = (LPVOID*) (((unsigned long)base) + 0x10C223);
@@ -606,32 +610,23 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     if(init_players)
     {
       if(player==1)
-        select_spell = (int)*addr_player_1_spell;
+        ImGui::InputScalar("Spell", ImGuiDataType_U8, addr_player_1_spell, &spell_step);
       else
-        select_spell = (int)*addr_player_2_spell;
-        
-      ImGui::InputInt("Spell", &select_spell);
-      
-      if(player==1)
-        *addr_player_1_spell = (uint8_t)select_spell;
-      else
-        *addr_player_2_spell = (uint8_t)select_spell;
+        ImGui::InputScalar("Spell", ImGuiDataType_U8, addr_player_2_spell, &spell_step);
     }
     else
     {
-      int placeholder = 0;
-      ImGui::InputInt("Spell", &placeholder);
+      ImGui::InputInt("Spell", &spell_placeholder);
     }
 
     // money
     if(money)
     {
-      ImGui::InputInt("Money", money);
-      ImGui::SameLine(); HelpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n");
+      ImGui::InputScalar("Money", ImGuiDataType_U64, money, &money_step);
     }
     else
     {
-      money = (int*) (*((LPVOID*)(((unsigned long)base)+0xB7181C)));
+      money = (unsigned long*) (*((LPVOID*)(((unsigned long)base)+0xB7181C)));
       ImGui::Text("Money: ???");
     }
 
