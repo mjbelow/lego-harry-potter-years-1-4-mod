@@ -649,6 +649,24 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     ImGui::InputFloat("Gravity", &gravity, 0.1f, 1.0f, "%.6f");
     gravity /= 1000;
     
+    if(ImGui::Button("Set Camera"))
+    {
+      tank_controls_set=true;
+      camera_pitch_set=true;
+      camera_yaw_set=true;
+      camera_position_set=true;
+    }
+    
+    ImGui::SameLine();
+    
+    if(ImGui::Button("Clear Camera"))
+    {
+      tank_controls_set=false;
+      camera_pitch_set=false;
+      camera_yaw_set=false;
+      camera_position_set=false;
+    }
+    
     // tank controls
     ImGui::Checkbox("Tank Controls", &tank_controls_set);
     ImGui::SliderInt("Tank", &tank, -65536, 65536);
