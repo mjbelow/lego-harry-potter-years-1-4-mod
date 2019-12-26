@@ -807,9 +807,23 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
   {
     reverse_set_prev = reverse_set;
     if(reverse_set)
+    {
       reverse = 1;
+      
+      if(adjust_rotate < 0)
+        yaw = -32768 - adjust_rotate;
+      else
+        yaw = 32768 - adjust_rotate;        
+    }
     else
+    {
       reverse = -1;
+      
+      if(adjust_rotate < 0)
+        yaw = -65536 - adjust_rotate;
+      else
+        yaw = 65536 - adjust_rotate;
+    }
   }
 
   // set fillmode according to cheat menu radio button (POINT, WIREFRAME, SOLID)
