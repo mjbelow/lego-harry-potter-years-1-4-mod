@@ -602,14 +602,7 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     ImGui::RadioButton("Player 1", &player, 1);
     ImGui::RadioButton("Player 2", &player, 2);
 
-    // show current spell
-    if(!init_players)
-      ImGui::Text("Current Spell: ???");
-    else if(player==1)
-      ImGui::Text("Current Spell: %d", *addr_player_1_spell);
-    else
-      ImGui::Text("Current Spell: %d", *addr_player_2_spell);
-
+    // adjust spell
     if(init_players)
     {
       if(player==1)
@@ -623,6 +616,11 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
         *addr_player_1_spell = (uint8_t)select_spell;
       else
         *addr_player_2_spell = (uint8_t)select_spell;
+    }
+    else
+    {
+      int placeholder = 0;
+      ImGui::InputInt("Spell", &placeholder);
     }
 
     // money
@@ -706,7 +704,7 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     ImGui::End();
 
     // demo window to test imgui widgets
-    ImGui::ShowDemoWindow();
+    // ImGui::ShowDemoWindow();
 
     // print debug info when menu is activated
     if(print_debug_info)
