@@ -1,6 +1,8 @@
 @echo off
 
-call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars32.bat"
+set vcvars32="C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars32.bat"
+
+call %vcvars32%
 
 if not exist objects (
   mkdir objects
