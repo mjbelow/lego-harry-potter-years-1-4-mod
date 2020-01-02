@@ -33,7 +33,7 @@ https://youtu.be/IAHii096mQw
     * set path variable ***game_directory*** to your game's directory
     
 3. Run **build dependencies.cmd** (doesn't need to be run again if you only edit *main.cpp* or *assembly.asm*)
-4. Run **build.cmd** (When a build is successful, **InjectedDll** and **MinHook.x86.dll** are automatically copied to game's directory)
+4. Run **build.cmd** (When a build is successful, **InjectedDll.dll** and **MinHook.x86.dll** are automatically copied to game's directory)
 
 ## Usage
 
