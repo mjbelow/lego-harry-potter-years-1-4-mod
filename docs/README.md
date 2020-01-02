@@ -21,6 +21,8 @@ https://youtu.be/IAHii096mQw
 * Windows SDK
 * Microsoft Build Tools
 
+**Instructions**
+
 1. Edit **build dependencies.cmd**
 
     * set path variable ***vcvars32*** to where your copy is located
