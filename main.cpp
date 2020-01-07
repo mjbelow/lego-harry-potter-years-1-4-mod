@@ -238,8 +238,8 @@ LRESULT CALLBACK hWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
       // [ESC] to quickly exit the app
       else if(wParam == VK_ESCAPE)
       {
-        ImGui_ImplDX9_Shutdown();
-        ImGui_ImplWin32_Shutdown();
+        // ImGui_ImplDX9_Shutdown();
+        // ImGui_ImplWin32_Shutdown();
       }
       // [S] key to set options
       else if(wParam == 0x53)
