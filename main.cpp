@@ -136,8 +136,6 @@ static HANDLE handle;
 
 // overwriting instructions
 static std::uint8_t nop_code[] {0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90};
-static std::uint8_t jmp_code[6] = {0xE9,0x00,0x00,0x00,0x00,0x00};
-static std::uint8_t org_code[6];
 static std::uint8_t jmp_speed[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_speed[5];
 static std::uint8_t jmp_jump[5] = {0xE9,0x00,0x00,0x00,0x00};
@@ -242,17 +240,6 @@ LRESULT CALLBACK hWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
       {
         ImGui_ImplDX9_Shutdown();
         ImGui_ImplWin32_Shutdown();
-      }
-      // O
-      else if(wParam == 0x4f)
-      {
-        // WriteProcessMemory(handle, addr, &nop_code, sizeof(org_code), NULL);
-        WriteProcessMemory(handle, addr, &jmp_code, sizeof(jmp_code), NULL);
-      }
-      // P
-      else if(wParam == 0x50)
-      {
-        WriteProcessMemory(handle, addr, &org_code, sizeof(org_code), NULL);
       }
       // [S] key to set options
       else if(wParam == 0x53)
@@ -534,23 +521,6 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_camera_position_z[2] = (offset >> 8) & 0xFF;
     jmp_camera_position_z[3] = (offset >> 16) & 0xFF;
     jmp_camera_position_z[4] = (offset >> 24) & 0xFF;
-    
-    
-    
-    
-    // offset = abs((int)addr-(int)&my_jump)-5;
-
-    // jmp_code[4] = (offset >> 24) & 0xFF;
-    // jmp_code[3] = (offset >> 16) & 0xFF;
-    // jmp_code[2] = (offset >> 8) & 0xFF;
-    // jmp_code[1] = offset & 0xFF;
-
-
-    // memcpy(org_code, addr, sizeof(org_code));
-
-    // for(uint8_t val: org_code)
-      // printf("%02X ",val);
-    // std::cout << std::endl;
   }
 
   if (!init_imgui)
