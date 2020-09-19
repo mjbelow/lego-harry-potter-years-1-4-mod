@@ -26,6 +26,10 @@ extrn adjust_height:DWORD
 extrn ret_camera_position_x:DWORD
 extrn ret_camera_position_y:DWORD
 extrn ret_camera_position_z:DWORD
+extrn ret_all_access:DWORD
+
+.data
+all_access_code db 1Eh
 
 .code
 
@@ -250,5 +254,10 @@ camera_position_z proc export
   fstp  dword ptr [ecx + 120h]
   jmp   ret_camera_position_z
 camera_position_z endp
+
+all_access proc export
+  movzx eax, all_access_code
+  jmp ret_all_access
+all_access endp
 
 end

@@ -41,6 +41,7 @@ extern "C" int adjust_rotate_prev = adjust_rotate;
 extern "C" LPVOID* ret_camera_position_x = (LPVOID*)0;
 extern "C" LPVOID* ret_camera_position_y = (LPVOID*)0;
 extern "C" LPVOID* ret_camera_position_z = (LPVOID*)0;
+extern "C" LPVOID* ret_all_access = (LPVOID*)0;
 
 int sensitivity = 0;
 
@@ -89,6 +90,7 @@ extern "C" void camera_yaw();
 extern "C" void camera_position_x();
 extern "C" void camera_position_y();
 extern "C" void camera_position_z();
+extern "C" void all_access();
 
 // hook definitions
 typedef long(__stdcall* EndScene)(LPDIRECT3DDEVICE9);
@@ -129,6 +131,7 @@ static LPVOID* addr_camera_yaw;
 static LPVOID* addr_camera_position_x;
 static LPVOID* addr_camera_position_y;
 static LPVOID* addr_camera_position_z;
+static LPVOID* addr_all_access;
 
 // writing to memory
 static DWORD procID;
@@ -154,6 +157,8 @@ static std::uint8_t jmp_camera_position_y[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_camera_position_y[5];
 static std::uint8_t jmp_camera_position_z[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_camera_position_z[5];
+static std::uint8_t jmp_all_access[5] = {0xE9,0x00,0x00,0x00,0x00};
+static std::uint8_t org_all_access[5];
 
 // initializing
 static bool init_handle = false;
@@ -362,6 +367,9 @@ static bool camera_position_set_prev = camera_position_set;
 static bool reverse_set = false;
 static bool reverse_set_prev = reverse_set;
 
+static bool all_access_set = false;
+static bool all_access_set_prev = all_access_set;
+
 static bool print_debug_info = true;
 static bool init_players = false;
 
@@ -521,6 +529,19 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_camera_position_z[2] = (offset >> 8) & 0xFF;
     jmp_camera_position_z[3] = (offset >> 16) & 0xFF;
     jmp_camera_position_z[4] = (offset >> 24) & 0xFF;
+    
+    // all access
+    addr_all_access = (LPVOID*) (((unsigned long)base) + 0xFE791F);
+    ret_all_access = (LPVOID*) (((unsigned long)addr_all_access) + 7);
+    memcpy(org_all_access, addr_all_access, 5);
+    
+    offset = abs((int)&all_access - (int)addr_all_access) - 5;
+    
+    jmp_all_access[1] = offset & 0xFF;
+    jmp_all_access[2] = (offset >> 8) & 0xFF;
+    jmp_all_access[3] = (offset >> 16) & 0xFF;
+    jmp_all_access[4] = (offset >> 24) & 0xFF;
+    
   }
 
   if (!init_imgui)
@@ -573,6 +594,7 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     ImGui::RadioButton("WIREFRAME", &fillmode, 2); ImGui::SameLine();
     ImGui::RadioButton("SOLID", &fillmode, 3);
     ImGui::Checkbox("Freeze Red Spells", &freeze_spells);
+    ImGui::Checkbox("All Access", &all_access_set);
     ImGui::RadioButton("Player 1", &player, 1);
     ImGui::RadioButton("Player 2", &player, 2);
 
@@ -807,6 +829,15 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
       else
         yaw = 65536 - adjust_rotate;
     }
+  }
+  
+  if(all_access_set != all_access_set_prev)
+  {
+    all_access_set_prev = all_access_set;
+    if(all_access_set)
+      WriteProcessMemory(handle, addr_all_access, &jmp_all_access, 5, NULL);
+    else
+      WriteProcessMemory(handle, addr_all_access, &org_all_access, 5, NULL);
   }
 
   // set fillmode according to cheat menu radio button (POINT, WIREFRAME, SOLID)
