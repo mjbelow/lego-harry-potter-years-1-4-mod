@@ -132,6 +132,7 @@ static LPVOID* addr_camera_position_x;
 static LPVOID* addr_camera_position_y;
 static LPVOID* addr_camera_position_z;
 static LPVOID* addr_all_access;
+static LPVOID* addr_adult_check;
 
 // writing to memory
 static DWORD procID;
@@ -159,6 +160,8 @@ static std::uint8_t jmp_camera_position_z[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_camera_position_z[5];
 static std::uint8_t jmp_all_access[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_all_access[5];
+static std::uint8_t asm_adult_check[6] = {0x0F,0x85,0x7F,0x02,0x00,0x00};
+static std::uint8_t asm_bypass_adult_check[6] = {0xE9,0x80,0x02,0x00,0x00,0x90};
 
 // initializing
 static bool init_handle = false;
@@ -370,6 +373,9 @@ static bool reverse_set_prev = reverse_set;
 static bool all_access_set = false;
 static bool all_access_set_prev = all_access_set;
 
+static bool bypass_adult_check_set = false;
+static bool bypass_adult_check_set_prev = bypass_adult_check_set;
+
 static bool print_debug_info = true;
 static bool init_players = false;
 
@@ -542,6 +548,9 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_all_access[3] = (offset >> 16) & 0xFF;
     jmp_all_access[4] = (offset >> 24) & 0xFF;
     
+    // adult check
+    addr_adult_check = (LPVOID*) (((unsigned long)base) + 0x2DC4BA);
+    
   }
 
   if (!init_imgui)
@@ -595,6 +604,8 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     ImGui::RadioButton("SOLID", &fillmode, 3);
     ImGui::Checkbox("Freeze Red Spells", &freeze_spells);
     ImGui::Checkbox("All Access", &all_access_set);
+    ImGui::SameLine();
+    ImGui::Checkbox("Bypass Adult Check", &bypass_adult_check_set);
     ImGui::RadioButton("Player 1", &player, 1);
     ImGui::RadioButton("Player 2", &player, 2);
 
@@ -838,6 +849,15 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
       WriteProcessMemory(handle, addr_all_access, &jmp_all_access, 5, NULL);
     else
       WriteProcessMemory(handle, addr_all_access, &org_all_access, 5, NULL);
+  }
+  
+  if(bypass_adult_check_set != bypass_adult_check_set_prev)
+  {
+      bypass_adult_check_set_prev = bypass_adult_check_set;
+      if(bypass_adult_check_set)
+          WriteProcessMemory(handle, addr_adult_check, &asm_bypass_adult_check, 6, NULL);
+      else
+          WriteProcessMemory(handle, addr_adult_check, &asm_adult_check, 6, NULL);
   }
 
   // set fillmode according to cheat menu radio button (POINT, WIREFRAME, SOLID)
