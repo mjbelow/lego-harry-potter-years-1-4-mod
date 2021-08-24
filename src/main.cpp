@@ -662,6 +662,12 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     print_debug_info = true;
   }
 
+  if(ImGui::Button("Crash Game"))
+  {
+    ImGui_ImplDX9_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+  }
+
   // Rendering
   ImGui::EndFrame();
   ImGui::Render();
