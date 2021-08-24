@@ -100,19 +100,6 @@ static WNDPROC oWndProc = nullptr;
 // random value to use for dll import with CFF Explorer (or any other PE editor)
 extern "C" __declspec(dllexport) bool my_import = true;
 
-// values to edit render state (viewable with console)
-extern "C" __declspec(dllexport) uint8_t t1 = 8;
-extern "C" __declspec(dllexport) uint8_t t2 = 2;
-extern "C" __declspec(dllexport) uint8_t t1_prev = 1;
-extern "C" __declspec(dllexport) uint8_t t2_prev = 4;
-D3DRENDERSTATETYPE r_state = (D3DRENDERSTATETYPE)t1;
-DWORD r_value = t2;
-static int change = 1;
-static bool update = false;
-static bool t1_update = false;
-static bool t2_update = false;
-static bool change_update = false;
-
 // addresses (base, instructions, data)
 extern "C" LPVOID* base = (LPVOID*)(size_t)GetModuleHandle(NULL);
 static LPVOID* addr;
@@ -248,65 +235,6 @@ LRESULT CALLBACK hWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
       {
         // ImGui_ImplDX9_Shutdown();
         // ImGui_ImplWin32_Shutdown();
-      }
-      // [S] key to set options
-      else if(wParam == 0x53)
-      {
-        update=true;
-      }
-      else if(wParam == VK_UP)
-      {
-        t1+=change;
-        update=true;
-        t1_update=true;
-      }
-      else if(wParam == VK_DOWN)
-      {
-        t1-=change;
-        update=true;
-        t1_update=true;
-      }
-      else if(wParam == VK_LEFT)
-      {
-        t2-=change;
-        update=true;
-        t2_update=true;
-      }
-      else if(wParam == VK_RIGHT)
-      {
-        t2+=change;
-        update=true;
-        t2_update=true;
-      }
-      else if(wParam == 0x31)
-      {
-        change=1;
-        update=true;
-        change_update=true;
-      }
-      else if(wParam == 0x32)
-      {
-        change=8;
-        update=true;
-        change_update=true;
-      }
-      else if(wParam == 0x33)
-      {
-        change=16;
-        update=true;
-        change_update=true;
-      }
-      else if(wParam == 0x34)
-      {
-        change=32;
-        update=true;
-        change_update=true;
-      }
-      else if(wParam == 0x35)
-      {
-        change=64;
-        update=true;
-        change_update=true;
       }
   }
   return CallWindowProc(oWndProc, hWnd, msg, wParam, lParam);
@@ -861,39 +789,12 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
   }
 
   // set fillmode according to cheat menu radio button (POINT, WIREFRAME, SOLID)
-  pDevice->SetRenderState(D3DRS_FILLMODE, fillmode);
-
-  // console info for setting render states
-  if(update)
+  // default is "3" (solid), so prevent calling this when it's set to solid
+  if (fillmode != 3)
   {
-
-    update=false;
-    // clear display
-    // documents/programming/ansi/ASCII Table - ANSI Escape sequences.html
-    printf("\033[2J");
-    printf("\033[H");
-
-    if(t1_update)
-      printf("change: %d\nstate: \033[1;30;107m%d\033[0m\nvalue: %d\n", change, t1, t2);
-    else if(t2_update)
-      printf("change: %d\nstate: %d\nvalue: \033[1;30;107m%d\033[0m\n", change, t1, t2);
-    else if(change_update)
-      printf("change: \033[1;30;107m%d\033[0m\nstate: %d\nvalue: %d\n", change, t1, t2);
-    else
-    {
-      printf("change: %d\nstate: %d\nvalue: %d\n", change, t1, t2);
-
-      r_state = (D3DRENDERSTATETYPE)t1;
-      r_value = t2;
-
-      pDevice->SetRenderState(r_state, r_value);
-    }
-
-    t1_update=false;
-    t2_update=false;
-    change_update=false;
-
+	  pDevice->SetRenderState(D3DRS_FILLMODE, fillmode);
   }
+
 
   return oEndScene(pDevice);
 
