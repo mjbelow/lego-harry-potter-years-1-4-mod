@@ -3,3 +3,8 @@
 **/.gitignore
 /docs
 build.cmd
+dll/
+objects/
+obj/*.o
+obj/*.obj
+bin/InjectedDll.dll
