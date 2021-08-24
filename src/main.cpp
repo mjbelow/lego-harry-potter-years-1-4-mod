@@ -21,27 +21,27 @@ const float my_pi = 32768.0;
 int reverse = -1;
 
 // variables needed for assembly file
-extern "C" LPVOID* jmp_addr = (LPVOID*)0;
+extern "C" LPVOID* jmp_addr = (LPVOID*)(size_t)0;
 extern "C" float speed = 5;
-extern "C" LPVOID* ret_speed = (LPVOID*)0;
+extern "C" LPVOID* ret_speed = (LPVOID*)(size_t)0;
 extern "C" float jump = 1.9;
-extern "C" LPVOID* ret_jump = (LPVOID*)0;
+extern "C" LPVOID* ret_jump = (LPVOID*)(size_t)0;
 extern "C" float gravity = .0001;
-extern "C" LPVOID* ret_gravity = (LPVOID*)0;
+extern "C" LPVOID* ret_gravity = (LPVOID*)(size_t)0;
 extern "C" int tank = 0;
-extern "C" LPVOID* ret_tank_controls = (LPVOID*)0;
+extern "C" LPVOID* ret_tank_controls = (LPVOID*)(size_t)0;
 extern "C" int pitch = 0;
-extern "C" LPVOID* ret_camera_pitch = (LPVOID*)0;
+extern "C" LPVOID* ret_camera_pitch = (LPVOID*)(size_t)0;
 extern "C" int yaw = 0;
-extern "C" LPVOID* ret_camera_yaw = (LPVOID*)0;
+extern "C" LPVOID* ret_camera_yaw = (LPVOID*)(size_t)0;
 extern "C" float adjust_position = 1.0;
 extern "C" float adjust_height = 0;
 extern "C" int adjust_rotate = 0;
 extern "C" int adjust_rotate_prev = adjust_rotate;
-extern "C" LPVOID* ret_camera_position_x = (LPVOID*)0;
-extern "C" LPVOID* ret_camera_position_y = (LPVOID*)0;
-extern "C" LPVOID* ret_camera_position_z = (LPVOID*)0;
-extern "C" LPVOID* ret_all_access = (LPVOID*)0;
+extern "C" LPVOID* ret_camera_position_x = (LPVOID*)(size_t)0;
+extern "C" LPVOID* ret_camera_position_y = (LPVOID*)(size_t)0;
+extern "C" LPVOID* ret_camera_position_z = (LPVOID*)(size_t)0;
+extern "C" LPVOID* ret_all_access = (LPVOID*)(size_t)0;
 
 int sensitivity = 0;
 
@@ -114,12 +114,12 @@ static bool t2_update = false;
 static bool change_update = false;
 
 // addresses (base, instructions, data)
-extern "C" LPVOID* base = (LPVOID*)GetModuleHandle(NULL);
+extern "C" LPVOID* base = (LPVOID*)(size_t)GetModuleHandle(NULL);
 static LPVOID* addr;
 static LPVOID* addr_spell_change;
-extern "C" __declspec(dllexport) LPVOID* addr_player_1 = (LPVOID*)0;
+extern "C" __declspec(dllexport) LPVOID* addr_player_1 = (LPVOID*)(size_t)0;
 static uint8_t* addr_player_1_spell;
-extern "C" __declspec(dllexport) LPVOID* addr_player_2 = (LPVOID*)0;
+extern "C" __declspec(dllexport) LPVOID* addr_player_2 = (LPVOID*)(size_t)0;
 static uint8_t* addr_player_2_spell;
 static unsigned long* money;
 static LPVOID* addr_speed;
@@ -418,22 +418,22 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     g_d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
 
 
-    addr = (LPVOID*) ( ((unsigned long)base) + 0x1fc08);
-    jmp_addr = (LPVOID*) ( ((unsigned long)addr) + 0x6  );
-    addr_spell_change = (LPVOID*) (((unsigned long)base)+0xE493B);
-    addr_player_1 = (LPVOID*) (((unsigned long)base)+0xB71DA0);
-    addr_player_1_spell = (uint8_t*)(((unsigned long)*addr_player_1)+0x12c4);
-    addr_player_2 = (LPVOID*) (((unsigned long)base)+0xB71DA4);
-    addr_player_2_spell = (uint8_t*)(((unsigned long)*addr_player_1)+0x12c4);
+    addr = (LPVOID*)(size_t) ( ((unsigned long)(size_t)base) + 0x1fc08);
+    jmp_addr = (LPVOID*)(size_t) ( ((unsigned long)(size_t)addr) + 0x6  );
+    addr_spell_change = (LPVOID*)(size_t) (((unsigned long)(size_t)base)+0xE493B);
+    addr_player_1 = (LPVOID*)(size_t) (((unsigned long)(size_t)base)+0xB71DA0);
+    addr_player_1_spell = (uint8_t*)(size_t)(((unsigned long)(size_t)*addr_player_1)+0x12c4);
+    addr_player_2 = (LPVOID*)(size_t) (((unsigned long)(size_t)base)+0xB71DA4);
+    addr_player_2_spell = (uint8_t*)(size_t)(((unsigned long)(size_t)*addr_player_1)+0x12c4);
 
-    money = (unsigned long*) (*((LPVOID*)(((unsigned long)base)+0xB7181C)));
+    money = (unsigned long*) (*((LPVOID*)(size_t)(((unsigned long)(size_t)base)+0xB7181C)));
 
     // speed hack
-    addr_speed = (LPVOID*) (((unsigned long)base) + 0x10C223);
-    ret_speed = (LPVOID*) (((unsigned long)addr_speed) + 0x7);
+    addr_speed = (LPVOID*)(size_t) (((unsigned long)(size_t)base) + 0x10C223);
+    ret_speed = (LPVOID*)(size_t) (((unsigned long)(size_t)addr_speed) + 0x7);
     memcpy(org_speed, addr_speed, sizeof(org_speed));
 
-    offset = abs((int)&speed_hack - (int)addr_speed) - 5;
+    offset = abs((int)(size_t)&speed_hack - (int)(size_t)addr_speed) - 5;
     
     jmp_speed[1] = offset & 0xFF;
     jmp_speed[2] = (offset >> 8) & 0xFF;
@@ -441,11 +441,11 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_speed[4] = (offset >> 24) & 0xFF;
     
     // jump hack
-    addr_jump = (LPVOID*) (((unsigned long)base) + 0x41CD10);
-    ret_jump = (LPVOID*) (((unsigned long)addr_jump) + 0x9);
+    addr_jump = (LPVOID*)(size_t) (((unsigned long)(size_t)base) + 0x41CD10);
+    ret_jump = (LPVOID*)(size_t) (((unsigned long)(size_t)addr_jump) + 0x9);
     memcpy(org_jump, addr_jump, 5);
 
-    offset = abs((int)&jump_hack - (int)addr_jump) - 5;
+    offset = abs((int)(size_t)&jump_hack - (int)(size_t)addr_jump) - 5;
     
     jmp_jump[1] = offset & 0xFF;
     jmp_jump[2] = (offset >> 8) & 0xFF;
@@ -453,11 +453,11 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_jump[4] = (offset >> 24) & 0xFF;
     
     // gravity hack
-    addr_gravity = (LPVOID*) (((unsigned long)base) + 0xFC017);
-    ret_gravity = (LPVOID*) (((unsigned long)addr_gravity) + 0x6);
+    addr_gravity = (LPVOID*)(size_t) (((unsigned long)(size_t)base) + 0xFC017);
+    ret_gravity = (LPVOID*)(size_t) (((unsigned long)(size_t)addr_gravity) + 0x6);
     memcpy(org_gravity, addr_gravity, 5);
 
-    offset = abs((int)&gravity_hack - (int)addr_gravity) - 5;
+    offset = abs((int)(size_t)&gravity_hack - (int)(size_t)addr_gravity) - 5;
     
     jmp_gravity[1] = offset & 0xFF;
     jmp_gravity[2] = (offset >> 8) & 0xFF;
@@ -465,11 +465,11 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_gravity[4] = (offset >> 24) & 0xFF;
     
     // tank controls (1st person camera)
-    addr_tank_controls = (LPVOID*) (((unsigned long)base) + 0x38A985);
-    ret_tank_controls = (LPVOID*) (((unsigned long)addr_tank_controls) + 0x6);
+    addr_tank_controls = (LPVOID*)(size_t) (((unsigned long)(size_t)base) + 0x38A985);
+    ret_tank_controls = (LPVOID*)(size_t) (((unsigned long)(size_t)addr_tank_controls) + 0x6);
     memcpy(org_tank_controls, addr_tank_controls, 5);
 
-    offset = abs((int)&tank_controls - (int)addr_tank_controls) - 5;
+    offset = abs((int)(size_t)&tank_controls - (int)(size_t)addr_tank_controls) - 5;
     
     jmp_tank_controls[1] = offset & 0xFF;
     jmp_tank_controls[2] = (offset >> 8) & 0xFF;
@@ -477,11 +477,11 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_tank_controls[4] = (offset >> 24) & 0xFF;
     
     // camera pitch (1st person camera)
-    addr_camera_pitch = (LPVOID*) (((unsigned long)base) + 0xDA15);
-    ret_camera_pitch = (LPVOID*) (((unsigned long)addr_camera_pitch) + 0x6);
+    addr_camera_pitch = (LPVOID*)(size_t) (((unsigned long)(size_t)base) + 0xDA15);
+    ret_camera_pitch = (LPVOID*)(size_t) (((unsigned long)(size_t)addr_camera_pitch) + 0x6);
     memcpy(org_camera_pitch, addr_camera_pitch, 5);
 
-    offset = abs((int)&camera_pitch - (int)addr_camera_pitch) - 5;
+    offset = abs((int)(size_t)&camera_pitch - (int)(size_t)addr_camera_pitch) - 5;
     
     jmp_camera_pitch[1] = offset & 0xFF;
     jmp_camera_pitch[2] = (offset >> 8) & 0xFF;
@@ -489,11 +489,11 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_camera_pitch[4] = (offset >> 24) & 0xFF;
     
     // camera yaw (1st person camera)
-    addr_camera_yaw = (LPVOID*) (((unsigned long)base) + 0xDA09);
-    ret_camera_yaw = (LPVOID*) (((unsigned long)addr_camera_yaw) + 0x6);
+    addr_camera_yaw = (LPVOID*)(size_t) (((unsigned long)(size_t)base) + 0xDA09);
+    ret_camera_yaw = (LPVOID*)(size_t) (((unsigned long)(size_t)addr_camera_yaw) + 0x6);
     memcpy(org_camera_yaw, addr_camera_yaw, 5);
 
-    offset = abs((int)&camera_yaw - (int)addr_camera_yaw) - 5;
+    offset = abs((int)(size_t)&camera_yaw - (int)(size_t)addr_camera_yaw) - 5;
     
     jmp_camera_yaw[1] = offset & 0xFF;
     jmp_camera_yaw[2] = (offset >> 8) & 0xFF;
@@ -501,11 +501,11 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_camera_yaw[4] = (offset >> 24) & 0xFF;
     
     // camera position x (1st person camera)
-    addr_camera_position_x = (LPVOID*) (((unsigned long)base) + 0xBB25);
-    ret_camera_position_x = (LPVOID*) (((unsigned long)addr_camera_position_x) + 0x6);
+    addr_camera_position_x = (LPVOID*)(size_t) (((unsigned long)(size_t)base) + 0xBB25);
+    ret_camera_position_x = (LPVOID*)(size_t) (((unsigned long)(size_t)addr_camera_position_x) + 0x6);
     memcpy(org_camera_position_x, addr_camera_position_x, 5);
 
-    offset = abs((int)&camera_position_x - (int)addr_camera_position_x) - 5;
+    offset = abs((int)(size_t)&camera_position_x - (int)(size_t)addr_camera_position_x) - 5;
     
     jmp_camera_position_x[1] = offset & 0xFF;
     jmp_camera_position_x[2] = (offset >> 8) & 0xFF;
@@ -513,11 +513,11 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_camera_position_x[4] = (offset >> 24) & 0xFF;
     
     // camera position y (1st person camera)
-    addr_camera_position_y = (LPVOID*) (((unsigned long)base) + 0xBAF7);
-    ret_camera_position_y = (LPVOID*) (((unsigned long)addr_camera_position_y) + 0x6);
+    addr_camera_position_y = (LPVOID*)(size_t) (((unsigned long)(size_t)base) + 0xBAF7);
+    ret_camera_position_y = (LPVOID*)(size_t) (((unsigned long)(size_t)addr_camera_position_y) + 0x6);
     memcpy(org_camera_position_y, addr_camera_position_y, 5);
 
-    offset = abs((int)&camera_position_y - (int)addr_camera_position_y) - 5;
+    offset = abs((int)(size_t)&camera_position_y - (int)(size_t)addr_camera_position_y) - 5;
     
     jmp_camera_position_y[1] = offset & 0xFF;
     jmp_camera_position_y[2] = (offset >> 8) & 0xFF;
@@ -525,11 +525,11 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_camera_position_y[4] = (offset >> 24) & 0xFF;
     
     // camera position z (1st person camera)
-    addr_camera_position_z = (LPVOID*) (((unsigned long)base) + 0xBB0E);
-    ret_camera_position_z = (LPVOID*) (((unsigned long)addr_camera_position_z) + 0x6);
+    addr_camera_position_z = (LPVOID*)(size_t) (((unsigned long)(size_t)base) + 0xBB0E);
+    ret_camera_position_z = (LPVOID*)(size_t) (((unsigned long)(size_t)addr_camera_position_z) + 0x6);
     memcpy(org_camera_position_z, addr_camera_position_z, 5);
 
-    offset = abs((int)&camera_position_z - (int)addr_camera_position_z) - 5;
+    offset = abs((int)(size_t)&camera_position_z - (int)(size_t)addr_camera_position_z) - 5;
     
     jmp_camera_position_z[1] = offset & 0xFF;
     jmp_camera_position_z[2] = (offset >> 8) & 0xFF;
@@ -537,11 +537,11 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_camera_position_z[4] = (offset >> 24) & 0xFF;
     
     // all access
-    addr_all_access = (LPVOID*) (((unsigned long)base) + 0xFE791F);
-    ret_all_access = (LPVOID*) (((unsigned long)addr_all_access) + 7);
+    addr_all_access = (LPVOID*)(size_t) (((unsigned long)(size_t)base) + 0xFE791F);
+    ret_all_access = (LPVOID*)(size_t) (((unsigned long)(size_t)addr_all_access) + 7);
     memcpy(org_all_access, addr_all_access, 5);
     
-    offset = abs((int)&all_access - (int)addr_all_access) - 5;
+    offset = abs((int)(size_t)&all_access - (int)(size_t)addr_all_access) - 5;
     
     jmp_all_access[1] = offset & 0xFF;
     jmp_all_access[2] = (offset >> 8) & 0xFF;
@@ -549,7 +549,7 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     jmp_all_access[4] = (offset >> 24) & 0xFF;
     
     // adult check
-    addr_adult_check = (LPVOID*) (((unsigned long)base) + 0x2DC4BA);
+    addr_adult_check = (LPVOID*)(size_t) (((unsigned long)(size_t)base) + 0x2DC4BA);
     
   }
 
@@ -588,8 +588,8 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
   {
 
     init_players = true;
-    addr_player_1_spell = (uint8_t*)(((unsigned long)*addr_player_1)+0x12c4);
-    addr_player_2_spell = (uint8_t*)(((unsigned long)*addr_player_2)+0x12c4);
+    addr_player_1_spell = (uint8_t*)(size_t)(((unsigned long)(size_t)*addr_player_1)+0x12c4);
+    addr_player_2_spell = (uint8_t*)(size_t)(((unsigned long)(size_t)*addr_player_2)+0x12c4);
 
   }
 
@@ -629,7 +629,7 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     }
     else
     {
-      money = (unsigned long*) (*((LPVOID*)(((unsigned long)base)+0xB7181C)));
+      money = (unsigned long*) (*((LPVOID*)(size_t)(((unsigned long)(size_t)base)+0xB7181C)));
       ImGui::Text("Money: ???");
     }
 
@@ -899,15 +899,14 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
 
 }
 
-int main()
+void __stdcall main_entry()
 {
 
   if(kiero::init(kiero::RenderType::D3D9) == kiero::Status::Success)
   {
-    kiero::bind(42, (void**)&oEndScene, hkEndScene);
+    kiero::bind(42, (void**)&oEndScene, (void*)hkEndScene);
   }
 
-  return 0;
 
 }
 
@@ -919,7 +918,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID)
   switch (fdwReason)
   {
     case DLL_PROCESS_ATTACH:
-      CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)main, NULL, 0, NULL);
+      CreateThread(NULL, 0, (__stdcall LPTHREAD_START_ROUTINE)main_entry, NULL, 0, NULL);
       break;
   }
 

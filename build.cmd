@@ -14,7 +14,7 @@ if not exist objects (
 )
 
 REM assemble
-ml /Foobjects/ /c assembly.asm
+ml /Foobjects/ /c src\assembly.asm
 
 if %errorlevel% neq 0 (
   pause
@@ -22,7 +22,7 @@ if %errorlevel% neq 0 (
 )
 
 REM compile
-cl /c /I include main.cpp /Foobjects/
+cl /c /I include src\main.cpp /Foobjects/
 
 if %errorlevel% neq 0 (
   pause
