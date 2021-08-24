@@ -645,6 +645,12 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
             }
         }
 
+        if(ImGui::Button("Crash Game"))
+        {
+            ImGui_ImplDX9_Shutdown();
+            ImGui_ImplWin32_Shutdown();
+        }
+
         ImGui::End();
 
         // demo window to test imgui widgets
@@ -660,12 +666,6 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
     else
     {
         print_debug_info = true;
-    }
-
-    if(ImGui::Button("Crash Game"))
-    {
-        ImGui_ImplDX9_Shutdown();
-        ImGui_ImplWin32_Shutdown();
     }
 
     // Rendering
