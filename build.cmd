@@ -22,7 +22,7 @@ if %errorlevel% neq 0 (
 )
 
 REM compile
-cl /c /I include src\main.cpp /Foobjects/
+cl /c /I include src\*.cpp /Foobjects/
 
 if %errorlevel% neq 0 (
   pause

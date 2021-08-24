@@ -918,7 +918,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID)
   switch (fdwReason)
   {
     case DLL_PROCESS_ATTACH:
-      CreateThread(NULL, 0, (__stdcall LPTHREAD_START_ROUTINE)main_entry, NULL, 0, NULL);
+      CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)main_entry, NULL, 0, NULL);
       break;
   }
 
