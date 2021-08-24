@@ -1,2 +1,5 @@
 dll/
 objects/
+obj/*.o
+obj/*.obj
+bin/InjectedDll.dll

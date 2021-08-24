@@ -1,5 +1,5 @@
 #include "kiero.h"
-#include <Windows.h>
+#include <windows.h>
 #include <assert.h>
 
 #if KIERO_INCLUDE_D3D9
@@ -86,7 +86,7 @@ kiero::Status::Enum kiero::init(RenderType::Enum _renderType)
 				}
 
 				void* Direct3DCreate9;
-				if ((Direct3DCreate9 = ::GetProcAddress(libD3D9, "Direct3DCreate9")) == NULL)
+				if ((Direct3DCreate9 = (void*)::GetProcAddress(libD3D9, "Direct3DCreate9")) == NULL)
 				{
 					::DestroyWindow(window);
 					::UnregisterClass(windowClass.lpszClassName, windowClass.hInstance);
