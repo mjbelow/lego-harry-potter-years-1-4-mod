@@ -5,7 +5,7 @@
 
 
 .data
-_all_access_code db 1Eh
+_all_access_code dw 0FFFFh
 
 .code
 

@@ -29,7 +29,7 @@ extrn ret_camera_position_z:DWORD
 extrn ret_all_access:DWORD
 
 .data
-all_access_code db 1Eh
+all_access_code dw 0FFFFh
 
 .code
 
