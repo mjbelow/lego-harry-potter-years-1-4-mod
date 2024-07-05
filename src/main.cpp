@@ -42,6 +42,7 @@ extern "C" LPVOID* ret_camera_position_x = (LPVOID*)(size_t)0;
 extern "C" LPVOID* ret_camera_position_y = (LPVOID*)(size_t)0;
 extern "C" LPVOID* ret_camera_position_z = (LPVOID*)(size_t)0;
 extern "C" LPVOID* ret_all_access = (LPVOID*)(size_t)0;
+extern "C" LPVOID* ret_all_access_gog = (LPVOID*)(size_t)0;
 
 int sensitivity = 0;
 
@@ -91,6 +92,7 @@ extern "C" void camera_position_x();
 extern "C" void camera_position_y();
 extern "C" void camera_position_z();
 extern "C" void all_access();
+extern "C" void all_access_gog();
 
 // hook definitions
 typedef long(__stdcall* EndScene)(LPDIRECT3DDEVICE9);
@@ -119,6 +121,7 @@ static LPVOID* addr_camera_position_x;
 static LPVOID* addr_camera_position_y;
 static LPVOID* addr_camera_position_z;
 static LPVOID* addr_all_access;
+static LPVOID* addr_all_access_gog;
 static LPVOID* addr_adult_check;
 
 // writing to memory
@@ -147,6 +150,8 @@ static std::uint8_t jmp_camera_position_z[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_camera_position_z[5];
 static std::uint8_t jmp_all_access[5] = {0xE9,0x00,0x00,0x00,0x00};
 static std::uint8_t org_all_access[5];
+static std::uint8_t jmp_all_access_gog[5] = {0xE9,0x00,0x00,0x00,0x00};
+static std::uint8_t org_all_access_gog[5];
 static std::uint8_t asm_adult_check[6] = {0x0F,0x85,0x7F,0x02,0x00,0x00};
 static std::uint8_t asm_bypass_adult_check[6] = {0xE9,0x80,0x02,0x00,0x00,0x90};
 
@@ -300,6 +305,9 @@ static bool reverse_set_prev = reverse_set;
 
 static bool all_access_set = false;
 static bool all_access_set_prev = all_access_set;
+
+static bool all_access_gog_set = false;
+static bool all_access_gog_set_prev = all_access_gog_set;
 
 static bool bypass_adult_check_set = false;
 static bool bypass_adult_check_set_prev = bypass_adult_check_set;
@@ -476,6 +484,18 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
         jmp_all_access[3] = (offset >> 16) & 0xFF;
         jmp_all_access[4] = (offset >> 24) & 0xFF;
 
+        // all access (gog)
+        addr_all_access_gog = (LPVOID*)(size_t) (((unsigned long)(size_t)base) + 0x3A6AAA);
+        ret_all_access_gog = (LPVOID*)(size_t) (((unsigned long)(size_t)addr_all_access_gog) + 7);
+        memcpy(org_all_access_gog, addr_all_access_gog, 5);
+		
+		offset = abs((int)(size_t)&all_access_gog - (int)(size_t)addr_all_access_gog) - 5;
+		
+        jmp_all_access_gog[1] = offset & 0xFF;
+        jmp_all_access_gog[2] = (offset >> 8) & 0xFF;
+        jmp_all_access_gog[3] = (offset >> 16) & 0xFF;
+        jmp_all_access_gog[4] = (offset >> 24) & 0xFF;
+		
         // adult check
         addr_adult_check = (LPVOID*)(size_t) (((unsigned long)(size_t)base) + 0x2DC4BA);
 
@@ -532,6 +552,8 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
         ImGui::RadioButton("SOLID", &fillmode, 3);
         ImGui::Checkbox("Freeze Red Spells", &freeze_spells);
         ImGui::Checkbox("All Access", &all_access_set);
+        ImGui::SameLine();
+        ImGui::Checkbox("All Access (GOG)", &all_access_gog_set);
         ImGui::SameLine();
         ImGui::Checkbox("Bypass Adult Check", &bypass_adult_check_set);
         ImGui::RadioButton("Player 1", &player, 1);
@@ -783,6 +805,15 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
             WriteProcessMemory(handle, addr_all_access, &jmp_all_access, 5, NULL);
         else
             WriteProcessMemory(handle, addr_all_access, &org_all_access, 5, NULL);
+    }
+
+    if(all_access_gog_set != all_access_gog_set_prev)
+    {
+        all_access_gog_set_prev = all_access_gog_set;
+        if(all_access_gog_set)
+            WriteProcessMemory(handle, addr_all_access_gog, &jmp_all_access_gog, 5, NULL);
+        else
+            WriteProcessMemory(handle, addr_all_access_gog, &org_all_access_gog, 5, NULL);
     }
 
     if(bypass_adult_check_set != bypass_adult_check_set_prev)

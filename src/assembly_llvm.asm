@@ -250,4 +250,10 @@ _all_access proc
   ret
 _all_access endp
 
+_all_access_gog proc
+  movzx eax, _all_access_code
+  push  _ret_all_access_gog
+  ret
+_all_access_gog endp
+
 end

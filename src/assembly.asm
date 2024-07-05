@@ -27,6 +27,7 @@ extrn ret_camera_position_x:DWORD
 extrn ret_camera_position_y:DWORD
 extrn ret_camera_position_z:DWORD
 extrn ret_all_access:DWORD
+extrn ret_all_access_gog:DWORD
 
 .data
 all_access_code dw 0FFFFh
@@ -259,5 +260,10 @@ all_access proc export
   movzx eax, all_access_code
   jmp ret_all_access
 all_access endp
+
+all_access_gog proc export
+  movzx eax, all_access_code
+  jmp ret_all_access_gog
+all_access_gog endp
 
 end
