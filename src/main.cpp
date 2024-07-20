@@ -667,10 +667,9 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
             }
         }
 
-        if(ImGui::Button("Crash Game"))
+        if(ImGui::Button("Exit Game"))
         {
-            ImGui_ImplDX9_Shutdown();
-            ImGui_ImplWin32_Shutdown();
+			ExitProcess(0);
         }
 
         ImGui::End();
